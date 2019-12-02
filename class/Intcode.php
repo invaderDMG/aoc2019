@@ -6,9 +6,11 @@ class Intcode
     const OFFSET_INPUT1 = 1;
     const OFFSET_INPUT2 = 2;
     const OFFSET_OUTPUT = 3;
-    const STEP_FORWARD = 4;
+    const STEP_FORWARD_ADD = 4;
+    const STEP_FORWARD_MULTIPLY = 4;
+    const STEP_FORWARD_HALT = 1;
     private $source;
-    private $cursor = 0;
+    private $instructionPointer = 0;
 
     public function __construct($source)
     {
@@ -17,24 +19,24 @@ class Intcode
 
     public function getOpcode()
     {
-        return $this->source[$this->cursor];
+        return $this->source[$this->instructionPointer];
     }
 
     public function getInputs()
     {
-        return [$this->source[$this->cursor+ self::OFFSET_INPUT1], $this->source[$this->cursor + self::OFFSET_INPUT2]];
+        return [$this->source[$this->instructionPointer+ self::OFFSET_INPUT1], $this->source[$this->instructionPointer + self::OFFSET_INPUT2]];
     }
 
 
     public function setOutput($output)
     {
-        $address = $this->getValue($this->cursor + self::OFFSET_OUTPUT);
+        $address = $this->getValue($this->instructionPointer + self::OFFSET_OUTPUT);
         $this->source[$address] = $output;
     }
 
-    public function stepForward()
+    public function stepForward($numberOfValues)
     {
-        $this->cursor = $this->cursor+self::STEP_FORWARD;
+        $this->instructionPointer += $numberOfValues;
     }
 
     public function operate()
@@ -42,14 +44,17 @@ class Intcode
         switch($this->getOpcode()) {
             case 1:
                 $this->setOutput($this->sumInputs());
+                $this->stepForward(self::STEP_FORWARD_ADD);
                 break;
             case 2:
                 $this->setOutput($this->multiplyInputs());
+                $this->stepForward(self::STEP_FORWARD_MULTIPLY);
                 break;
             case 99:
+                $this->stepForward(self::STEP_FORWARD_HALT);
                 return 1;
         }
-        $this->stepForward();
+
         $this->operate();
     }
 
@@ -76,5 +81,16 @@ class Intcode
     public function setValue($address, $value)
     {
         $this->source[$address] = $value;
+    }
+
+    public function setInput($noun, $verb)
+    {
+        $this->setValue(1, $noun);
+        $this->setValue(2, $verb);
+    }
+
+    public function getOutput()
+    {
+        return $this->getValue(0);
     }
 }
