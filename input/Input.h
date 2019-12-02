@@ -2,13 +2,15 @@
 #define AOC2018_INPUT_H
 
 #include <list>
+#include <string>
+#include <cmath>
 
 class Input {
     private:
         std::string fileName;
         std::list<int> content;
     public:
-        Input(const std::string& fileName);
+        explicit Input(const std::string& fileName);
         std::list<int> getContent();
     };
 #endif //AOC2018_INPUT_H

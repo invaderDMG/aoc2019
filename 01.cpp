@@ -1,22 +1,20 @@
 #include <iostream>
-#include <string>
 #include "input/Input.h"
-#include <math.h>
 
 using namespace std;
 
-int calculateFuelRequirementByMass(int mass);
+int calculateFuelRequirementByMass(int fuelMass);
 
-int sumOfFuelRequirements(list<int> massList);
+int sumOfFuelRequirements(list<int> &massList);
 
-int sumOfFuelRequirementsHavingFuelMass(list<int> massList);
+int sumOfFuelRequirementsHavingFuelMass(list<int> &massList);
 
-int calculateFuelRequirementOfTheFuel(int requirement);
+int calculateFuelRequirementOfTheFuel(int fuelMass);
 
 int main()
 {
-    Input *input = new Input("01.txt");
-    list<int> content = input->getContent();
+    Input input("01.txt");
+    list<int> content = input.getContent();
     int answer1 = sumOfFuelRequirements(content);
     cout << answer1 << endl;
     int answer2 = sumOfFuelRequirementsHavingFuelMass(content);
@@ -24,10 +22,10 @@ int main()
 
 }
 
-int sumOfFuelRequirementsHavingFuelMass(list<int> massList) {
+int sumOfFuelRequirementsHavingFuelMass(list<int> &massList) {
     int totalFuelRequirement = 0;
-    for(std::list<int>::iterator it = massList.begin(); it != massList.end(); ++it) {
-        int fuelMass = calculateFuelRequirementByMass(*it);
+    for (int moduleMass:massList) {
+        int fuelMass = calculateFuelRequirementByMass(moduleMass);
         int fuelNeededForTheFuel = calculateFuelRequirementOfTheFuel(fuelMass);
         totalFuelRequirement += fuelMass + fuelNeededForTheFuel;
     }
@@ -42,14 +40,15 @@ int calculateFuelRequirementOfTheFuel(int fuelMass) {
     return 0;
 }
 
-int sumOfFuelRequirements(list<int> massList) {
+int sumOfFuelRequirements(list<int> &massList) {
     int totalSum = 0;
-    for(std::list<int>::iterator it = massList.begin(); it != massList.end(); ++it)
-        totalSum += calculateFuelRequirementByMass(*it);
+    for(int moduleMass:massList)
+        totalSum += calculateFuelRequirementByMass(moduleMass);
     return totalSum;
 }
 
 
-int calculateFuelRequirementByMass(int mass) {
-    return floor(mass/3)-2;
+int calculateFuelRequirementByMass(int fuelMass) {
+    int fuelRequirementWithoutAdjust = floor(fuelMass / 3);
+    return fuelRequirementWithoutAdjust - 2;
 }
