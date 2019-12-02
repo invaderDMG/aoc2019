@@ -8,4 +8,4 @@ include_directories(./input)
 
 add_executable(aoc2019
         README.md 01.cpp
-        input/Input.h input/Input.cpp)
+        class/Input.h class/Input.cpp)

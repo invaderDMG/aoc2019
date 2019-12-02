@@ -1,5 +1,5 @@
 #include <iostream>
-#include "input/Input.h"
+#include "class/Input.h"
 
 using namespace std;
 
