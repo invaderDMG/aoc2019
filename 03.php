@@ -2,14 +2,12 @@
 include_once 'class/WirePanel.php';
 include_once 'class/Wire.php';
 $wirePanel = new WirePanel();
-$wirePanel->drawStatus();
-
 $file_lines = file('input/demo.txt');
+$wireValue = 1;
 foreach($file_lines as $wireInput) {
-    $wire = new Wire(explode(",", $wireInput));
-    var_dump($wire);
-    //$wirePanel->addWire($wire);
+    $wire = new Wire(explode(",", $wireInput), $wireValue);
+    $wirePanel->addWire($wire);
     //$wirePanel->drawStatus();
+    $wireValue++;
 }
-//$input = explode(",", $file_lines[0]);
-//$intcode = new Intcode($input);
+echo "Nearest intersection is ".$wirePanel->getNearestIntersection()." units away\n";
