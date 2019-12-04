@@ -1,5 +1,6 @@
 <?php
 include_once 'Coordinate.php';
+include_once 'Segment.php';
 
 class WirePanel
 {
@@ -7,8 +8,15 @@ class WirePanel
     const MARKER_CROSS = "X";
     const MARKER_CENTER = "o";
     private $panel;
+    /** @var Coordinate  */
     private $center;
-    private $intersections = [];
+
+    /** @var Coordinate[] */
+    private $intersectionList = [];
+    private $intersectionDistanceList = [];
+
+    /** @var Wire[] */
+    private $wireList;
 
     public function __construct()
     {
@@ -53,24 +61,20 @@ class WirePanel
     {
         $min = $this->getMinimumCoordinate();
         $max = $this->getMaximumCoordinate();
-
+        $map = "";
         for($j = $max->getY(); $j >= $min->getY(); $j--) {
             for($i = $min->getX(); $i <= $max->getX(); $i++) {
-                echo $this->getCoordinateValue(new Coordinate($i, $j));
+                $map .= $this->getCoordinateValue(new Coordinate($i, $j));
             }
-            echo "\n";
+            $map .= "\n";
         }
-        echo "\n";
+        file_put_contents("wiremap.txt", $map);
     }
 
     public function addWire(Wire $wire)
     {
-        $startingPoint = $this->center;
-        foreach ($wire->getPath() as $step) {
-            $coordinate = $this->calculateNextStep($startingPoint, $step);
-            $this->drawLine($startingPoint, $coordinate, $wire->getValue());
-            $startingPoint = $coordinate;
-        }
+        $this->wireList[] = $wire;
+        $this->connectWire($wire);
     }
 
     private function calculateNextStep(Coordinate $coordinate, $step)
@@ -107,7 +111,7 @@ class WirePanel
             }
             if ($this->getCoordinateValue($coordinate) != 0 && $this->getCoordinateValue($coordinate) != $value && $this->getCoordinateValue($coordinate) != self::MARKER_CENTER) {
                 $this->setCoordinateValue($coordinate, self::MARKER_CROSS);
-                $this->intersections[] = $coordinate;
+                $this->intersectionList[] = $coordinate;
             }
         }
     }
@@ -160,15 +164,65 @@ class WirePanel
 
     public function getNearestIntersection()
     {
-        foreach($this->intersections as $i => $coordinate) {
-            $this->intersections[$i] = $this->manhattanDistance($this->center, $coordinate);
+        foreach($this->intersectionList as $i => $coordinate) {
+            $this->intersectionDistanceList[$i] = $this->manhattanDistance($this->center, $coordinate);
         }
-        return min($this->intersections);
+        return min($this->intersectionDistanceList);
     }
 
     private function manhattanDistance(Coordinate $min, Coordinate $max)
     {
         return abs($min->getX() - $max->getX()) + abs($min->getY() - $max->getY());
+    }
+
+    private function connectWire($wire)
+    {
+        $startingPoint = $this->center;
+        foreach ($wire->getPath() as $step) {
+            $coordinate = $this->calculateNextStep($startingPoint, $step);
+            $this->drawLine($startingPoint, $coordinate, $wire->getValue());
+            $startingPoint = $coordinate;
+        }
+    }
+
+    public function getShortestPathToIntersection()
+    {
+        $maxCoordinate = $this->getMaximumCoordinate();
+        $minimumPath = $maxCoordinate->getX() * $maxCoordinate->getY();
+        /** @var Coordinate $intersection */
+        foreach($this->intersectionList as $intersection) {
+            echo "getting path from ".$this->center->prettyPrint()." to ".$intersection->prettyPrint()."\n";
+            $path0 = $this->followPath($this->wireList[0], $intersection);
+            $path1 = $this->followPath($this->wireList[1], $intersection);
+            $combinedPath = $path0+$path1;
+            if ($combinedPath < $minimumPath) {
+                $minimumPath = $combinedPath;
+            }
+            echo "Path 0 is ".$path0.", Path 1 is ".$path1.", combined is ".$combinedPath."\n";
+        }
+        return $minimumPath;
+    }
+
+    private function followPath(Wire $wire, Coordinate $target)
+    {
+        $startingPoint = $this->center;
+        $stepCounter = 0;
+        foreach ($wire->getPath() as $step) {
+            $nextCoordinate = $this->calculateNextStep($startingPoint, $step);
+            echo "- Going from ".$startingPoint->prettyPrint()." to ".$nextCoordinate->prettyPrint()." to reach ".$target->prettyPrint().". ";
+            $segment = new Segment($startingPoint, $nextCoordinate);
+            if (!$segment->contains($target)) {
+                $manhattanDistance = $this->manhattanDistance($startingPoint, $nextCoordinate);
+                $stepCounter+= $manhattanDistance;
+                echo "Walked a distance of ".$manhattanDistance." units and a total of ".$stepCounter."\n";
+            } else {
+                $manhattanDistance = $this->manhattanDistance($startingPoint, $target);
+                $stepCounter+= $manhattanDistance;
+                echo "Walked a distance of ".$manhattanDistance." units and a total of ".$stepCounter." and reached it!\n";
+                return $stepCounter;
+            }
+            $startingPoint = $nextCoordinate;
+        }
     }
 
 
