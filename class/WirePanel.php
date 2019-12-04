@@ -61,14 +61,32 @@ class WirePanel
     {
         $min = $this->getMinimumCoordinate();
         $max = $this->getMaximumCoordinate();
-        $map = "";
-        for($j = $max->getY(); $j >= $min->getY(); $j--) {
-            for($i = $min->getX(); $i <= $max->getX(); $i++) {
-                $map .= $this->getCoordinateValue(new Coordinate($i, $j));
+        $img = imagecreatetruecolor(abs($max->getX())+abs($min->getX())+1,abs($max->getY())+abs($min->getY())+1);
+        $black = imagecolorallocate($img,0,0,0);
+        for($y = $min->getY(); $y <= $max->getY(); $y++) {
+            for($x = $min->getX(); $x <= $max->getX(); $x++) {
+                switch($this->getCoordinateValue(new Coordinate($x, $y))) {
+                    case 1:
+                        $color = imagecolorallocate($img,255,0,0);
+                        break;
+                    case 2:
+                        $color = imagecolorallocate($img,0,0,255);
+                        break;
+                    case self::MARKER_CENTER:
+                        $color = imagecolorallocate($img, 0,255,0);
+                        break;
+                    case self::MARKER_CROSS:
+                        $color = imagecolorallocate($img, 255,0,255);
+                        break;
+                    default:
+                        $color = $black;
+                }
+                imagesetpixel($img,$x,$max->getY()-$y,$color);
             }
-            $map .= "\n";
         }
-        file_put_contents("wiremap.txt", $map);
+        header('Content-Type: image/png');
+        imagepng($img, "wiremap.png");
+        imagedestroy($img);
     }
 
     public function addWire(Wire $wire)
