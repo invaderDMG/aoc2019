@@ -1,5 +1,5 @@
 <?php
-
+include_once 'Opcode.php';
 
 class Intcode
 {
@@ -28,6 +28,9 @@ class Intcode
     private $source;
     private $instructionPointer = 0;
 
+    /** @var Opcode */
+    private $currentOpcode;
+
     public function __construct($source)
     {
         $this->source = $source;
@@ -45,7 +48,9 @@ class Intcode
 
     public function operate()
     {
-        switch($this->getOpcode()) {
+
+        $this->parseOpcode();
+        switch($this->currentOpcode->getOperation()) {
             case self::OPCODE_ADD:
                 $this->sum();
                 break;
@@ -55,8 +60,9 @@ class Intcode
             case self::OPCODE_HALT:
                 $this->stepForward(self::OPCODE_HALT_STEP);
                 return 1;
+            default:
+                die("unsupported operation\n");
         }
-
         $this->operate();
     }
 
@@ -91,25 +97,23 @@ class Intcode
         return $this->instructionPointer + $offset;
     }
 
-    private function sum($mode = self::MODE_POSITION)
+    private function sum()
     {
-        if ($mode == self::MODE_POSITION) {
-            $inputA = $this->getValueFromAddress(self::OPCODE_ADD_INPUT_A);
-            $inputB = $this->getValueFromAddress(self::OPCODE_ADD_INPUT_B);
-        }
-        $address = $this->getAddress(self::OPCODE_ADD_OUTPUT);
-        $this->setValue($address, $inputA + $inputB);
+        $mode = $this->currentOpcode->getModes();
+        $inputA = $this->getParameter($mode[0], self::OPCODE_ADD_INPUT_A);
+        $inputB = $this->getParameter($mode[1], self::OPCODE_ADD_INPUT_B);
+        $outputAddress = $this->getAddress(self::OPCODE_ADD_OUTPUT);
+        $this->setValue($outputAddress, $inputA + $inputB);
         $this->stepForward(self::OPCODE_ADD_STEP);
     }
 
-    private function multiply($mode = self::MODE_POSITION)
+    private function multiply()
     {
-        if ($mode == self::MODE_POSITION) {
-            $inputA = $this->getValueFromAddress(self::OPCODE_MULTIPLY_INPUT_A);
-            $inputB = $this->getValueFromAddress(self::OPCODE_MULTIPLY_INPUT_B);
-        }
-        $address = $this->getAddress(self::OPCODE_MULTIPLY_OUTPUT);
-        $this->setValue($address, $inputA * $inputB);
+        $mode = $this->currentOpcode->getModes();
+        $inputA = $this->getParameter($mode[0], self::OPCODE_MULTIPLY_INPUT_A);
+        $inputB = $this->getParameter($mode[1], self::OPCODE_MULTIPLY_INPUT_B);
+        $outputAddress = $this->getAddress(self::OPCODE_MULTIPLY_OUTPUT);
+        $this->setValue($outputAddress, $inputA * $inputB);
         $this->stepForward(self::OPCODE_MULTIPLY_STEP);
     }
 
@@ -117,7 +121,7 @@ class Intcode
      * @param $offset
      * @return int
      */
-    private function getValueFromAddress($offset)
+    private function getValueFromPosition($offset)
     {
         $position = $this->getValue($this->offsetPointer($offset));
         return $this->getValue($position);
@@ -130,5 +134,32 @@ class Intcode
     private function getAddress($offset)
     {
         return $this->getValue($this->offsetPointer($offset));
+    }
+
+    private function getImmediateValue(int $offset)
+    {
+        return $this->getValue($this->offsetPointer($offset));
+    }
+
+    private function parseOpcode()
+    {
+        $this->currentOpcode = new Opcode($this->getOpcode());
+    }
+
+    /**
+     * @param int $mode
+     * @param $offset
+     * @return int
+     */
+    private function getParameter(int $mode, $offset)
+    {
+        switch ($mode) {
+            case self::MODE_IMMEDIATE:
+                $parameter = $this->getImmediateValue($offset);
+                break;
+            default:
+                $parameter = $this->getValueFromPosition($offset);
+        }
+        return $parameter;
     }
 }
