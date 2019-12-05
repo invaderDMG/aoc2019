@@ -4,7 +4,10 @@
 class Opcode
 {
     private $operation;
-    private $modes;
+    private $modes = [];
+
+    const MODE_POSITION = 0;
+    const MODE_IMMEDIATE = 1;
     /**
      * Opcode constructor.
      */
@@ -31,5 +34,14 @@ class Opcode
     public function getModes(): array
     {
         return $this->modes;
+    }
+
+    public function getMode(int $int)
+    {
+        $mode = self::MODE_POSITION;
+        if (isset($this->modes[$int])) {
+            $mode = $this->modes[$int];
+        }
+        return $mode;
     }
 }
