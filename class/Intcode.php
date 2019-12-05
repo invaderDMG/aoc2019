@@ -53,7 +53,6 @@ class Intcode
     }
 
 
-
     public function __construct($source)
     {
         $this->source = $source;
@@ -73,35 +72,19 @@ class Intcode
     {
 
         $this->parseOpcode();
-        switch($this->currentOpcode->getOperation()) {
+        switch ($this->currentOpcode->getOperation()) {
             case self::OPCODE_ADD:
-//                echo "debug: ";
-//                echo $this->currentOpcode->getOperation().",";
-//                echo $this->getAddress(self::OPCODE_ADD_PARAMETER_A).",";
-//                echo $this->getAddress(self::OPCODE_ADD_PARAMETER_B).",";
-//                echo $this->getAddress(self::OPCODE_ADD_OUTPUT)."\n";
                 $this->sum();
                 break;
             case self::OPCODE_MULTIPLY:
-//                echo "debug: ";
-//                echo $this->currentOpcode->getOperation().",";
-//                echo $this->getAddress(self::OPCODE_MULTIPLY_PARAMETER_A).",";
-//                echo $this->getAddress(self::OPCODE_MULTIPLY_PARAMETER_B).",";
-//                echo $this->getAddress(self::OPCODE_MULTIPLY_OUTPUT)."\n";
                 $this->multiply();
                 break;
 
             case self::OPCODE_INPUT:
-//                echo "debug: ";
-//                echo $this->currentOpcode->getOperation().",";
-//                echo $this->getAddress(self::OPCODE_INPUT_PARAMETER_A)."\n";
                 $this->input();
                 break;
 
             case self::OPCODE_OUTPUT:
-//                echo "debug: ";
-//                echo $this->currentOpcode->getOperation().",";
-//                echo $this->getAddress(self::OPCODE_OUTPUT_PARAMETER_A)."\n";
                 $this->output();
                 break;
 
@@ -109,14 +92,14 @@ class Intcode
                 $this->stepForward(self::OPCODE_HALT_STEP);
                 return 1;
             default:
-                die("unsupported operation: ".$this->currentOpcode->getOperation()."\n");
+                die("unsupported operation: " . $this->currentOpcode->getOperation() . "\n");
         }
         $this->operate();
     }
 
     public function printSource()
     {
-        echo implode(",", $this->source)."\n";
+        echo implode(",", $this->source) . "\n";
     }
 
     public function getValue($address)
@@ -147,16 +130,19 @@ class Intcode
 
     private function sum()
     {
+//        echo "debug: ";
+//        echo $this->currentOpcode->getOperation() . "," . $this->getAddress(self::OPCODE_ADD_PARAMETER_A) . "," . $this->getAddress(self::OPCODE_ADD_PARAMETER_B) . "," . $this->getAddress(self::OPCODE_ADD_OUTPUT) . "\n";
         $inputA = $this->getParameter($this->currentOpcode->getMode(0), self::OPCODE_ADD_PARAMETER_A);
         $inputB = $this->getParameter($this->currentOpcode->getMode(1), self::OPCODE_ADD_PARAMETER_B);
         $outputAddress = $this->getAddress(self::OPCODE_ADD_OUTPUT);
-//        echo $inputA." + ".$inputB ." in outputAddress = ".$outputAddress."\n";
         $this->setValue($outputAddress, $inputA + $inputB);
         $this->stepForward(self::OPCODE_ADD_STEP);
     }
 
     private function multiply()
     {
+//        echo "debug: ";
+//        echo $this->currentOpcode->getOperation() . "," . $this->getAddress(self::OPCODE_MULTIPLY_PARAMETER_A) . "," . $this->getAddress(self::OPCODE_MULTIPLY_PARAMETER_B) . "," . $this->getAddress(self::OPCODE_MULTIPLY_OUTPUT) . "\n";
         $inputA = $this->getParameter($this->currentOpcode->getMode(0), self::OPCODE_MULTIPLY_PARAMETER_A);
         $inputB = $this->getParameter($this->currentOpcode->getMode(1), self::OPCODE_MULTIPLY_PARAMETER_B);
         $outputAddress = $this->getAddress(self::OPCODE_MULTIPLY_OUTPUT);
@@ -212,6 +198,8 @@ class Intcode
 
     private function input()
     {
+
+//        echo "debug: " . $this->currentOpcode->getOperation() . "," . $this->getAddress(self::OPCODE_INPUT_PARAMETER_A) . "\n";
         $address = $this->getParameter(Opcode::MODE_IMMEDIATE, self::OPCODE_INPUT_PARAMETER_A);
         $this->setValue($address, $this->input);
         $this->stepForward(self::OPCODE_INPUT_STEP);
@@ -220,6 +208,7 @@ class Intcode
 
     private function output()
     {
+//        echo "debug: " . $this->currentOpcode->getOperation() . "," . $this->getAddress(self::OPCODE_OUTPUT_PARAMETER_A) . "\n";
         $address = $this->getParameter(Opcode::MODE_IMMEDIATE, self::OPCODE_OUTPUT_PARAMETER_A);
         $this->output = $this->getValue($address);
         $this->stepForward(self::OPCODE_OUTPUT_STEP);
