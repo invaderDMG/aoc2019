@@ -6,8 +6,16 @@ class Intcode
     const OFFSET_INPUT1 = 1;
     const OFFSET_INPUT2 = 2;
     const OFFSET_OUTPUT = 3;
+    const OPCODE_ADD = 1;
+    const OPCODE_MULTIPLY = 2;
+    const OPCODE_INPUT = 3;
+    const OPCODE_OUTPUT = 4;
+    const OPCODE_HALT = 99;
     const STEP_FORWARD_ADD = 4;
     const STEP_FORWARD_MULTIPLY = 4;
+    const STEP_FORWARD_INPUT = 2;
+    const STEP_FORWARD_OUTPUT = 2;
+
     const STEP_FORWARD_HALT = 1;
     private $source;
     private $instructionPointer = 0;
@@ -42,15 +50,15 @@ class Intcode
     public function operate()
     {
         switch($this->getOpcode()) {
-            case 1:
+            case self::OPCODE_ADD:
                 $this->setOutput($this->sumInputs());
                 $this->stepForward(self::STEP_FORWARD_ADD);
                 break;
-            case 2:
+            case self::OPCODE_MULTIPLY:
                 $this->setOutput($this->multiplyInputs());
                 $this->stepForward(self::STEP_FORWARD_MULTIPLY);
                 break;
-            case 99:
+            case self::OPCODE_HALT:
                 $this->stepForward(self::STEP_FORWARD_HALT);
                 return 1;
         }
