@@ -3,20 +3,28 @@
 
 class Intcode
 {
-    const OFFSET_INPUT1 = 1;
-    const OFFSET_INPUT2 = 2;
-    const OFFSET_OUTPUT = 3;
     const OPCODE_ADD = 1;
-    const OPCODE_MULTIPLY = 2;
-    const OPCODE_INPUT = 3;
-    const OPCODE_OUTPUT = 4;
-    const OPCODE_HALT = 99;
-    const STEP_FORWARD_ADD = 4;
-    const STEP_FORWARD_MULTIPLY = 4;
-    const STEP_FORWARD_INPUT = 2;
-    const STEP_FORWARD_OUTPUT = 2;
+    const OPCODE_ADD_INPUT_A = 1;
+    const OPCODE_ADD_INPUT_B = 2;
+    const OPCODE_ADD_OUTPUT = 3;
+    const OPCODE_ADD_STEP = 4;
 
-    const STEP_FORWARD_HALT = 1;
+    const OPCODE_MULTIPLY = 2;
+    const OPCODE_MULTIPLY_INPUT_A = 1;
+    const OPCODE_MULTIPLY_INPUT_B = 2;
+    const OPCODE_MULTIPLY_OUTPUT = 3;
+    const OPCODE_MULTIPLY_STEP = 4;
+
+    const OPCODE_INPUT = 3;
+
+    const OPCODE_OUTPUT = 4;
+
+    const OPCODE_HALT = 99;
+    const OPCODE_HALT_STEP = 1;
+
+    const MODE_POSITION = 0;
+    const MODE_IMMEDIATE = 1;
+
     private $source;
     private $instructionPointer = 0;
 
@@ -30,18 +38,6 @@ class Intcode
         return $this->source[$this->instructionPointer];
     }
 
-    public function getInputs()
-    {
-        return [$this->source[$this->instructionPointer+ self::OFFSET_INPUT1], $this->source[$this->instructionPointer + self::OFFSET_INPUT2]];
-    }
-
-
-    public function setOutput($output)
-    {
-        $address = $this->getValue($this->instructionPointer + self::OFFSET_OUTPUT);
-        $this->source[$address] = $output;
-    }
-
     public function stepForward($numberOfValues)
     {
         $this->instructionPointer += $numberOfValues;
@@ -51,15 +47,13 @@ class Intcode
     {
         switch($this->getOpcode()) {
             case self::OPCODE_ADD:
-                $this->setOutput($this->sumInputs());
-                $this->stepForward(self::STEP_FORWARD_ADD);
+                $this->sum();
                 break;
             case self::OPCODE_MULTIPLY:
-                $this->setOutput($this->multiplyInputs());
-                $this->stepForward(self::STEP_FORWARD_MULTIPLY);
+                $this->multiply();
                 break;
             case self::OPCODE_HALT:
-                $this->stepForward(self::STEP_FORWARD_HALT);
+                $this->stepForward(self::OPCODE_HALT_STEP);
                 return 1;
         }
 
@@ -69,16 +63,6 @@ class Intcode
     public function printSource()
     {
         echo implode(",", $this->source)."\n";
-    }
-
-    private function sumInputs()
-    {
-        return $this->getValue($this->getInputs()[0]) + $this->getValue($this->getInputs()[1]);
-    }
-
-    private function multiplyInputs()
-    {
-        return $this->getValue($this->getInputs()[0]) * $this->getValue($this->getInputs()[1]);
     }
 
     public function getValue($address)
@@ -100,5 +84,51 @@ class Intcode
     public function getOutput()
     {
         return $this->getValue(0);
+    }
+
+    private function offsetPointer(int $offset)
+    {
+        return $this->instructionPointer + $offset;
+    }
+
+    private function sum($mode = self::MODE_POSITION)
+    {
+        if ($mode == self::MODE_POSITION) {
+            $inputA = $this->getValueFromAddress(self::OPCODE_ADD_INPUT_A);
+            $inputB = $this->getValueFromAddress(self::OPCODE_ADD_INPUT_B);
+        }
+        $address = $this->getAddress(self::OPCODE_ADD_OUTPUT);
+        $this->setValue($address, $inputA + $inputB);
+        $this->stepForward(self::OPCODE_ADD_STEP);
+    }
+
+    private function multiply($mode = self::MODE_POSITION)
+    {
+        if ($mode == self::MODE_POSITION) {
+            $inputA = $this->getValueFromAddress(self::OPCODE_MULTIPLY_INPUT_A);
+            $inputB = $this->getValueFromAddress(self::OPCODE_MULTIPLY_INPUT_B);
+        }
+        $address = $this->getAddress(self::OPCODE_MULTIPLY_OUTPUT);
+        $this->setValue($address, $inputA * $inputB);
+        $this->stepForward(self::OPCODE_MULTIPLY_STEP);
+    }
+
+    /**
+     * @param $offset
+     * @return int
+     */
+    private function getValueFromAddress($offset)
+    {
+        $position = $this->getValue($this->offsetPointer($offset));
+        return $this->getValue($position);
+    }
+
+    /**
+     * @param $offset
+     * @return int
+     */
+    private function getAddress($offset)
+    {
+        return $this->getValue($this->offsetPointer($offset));
     }
 }
